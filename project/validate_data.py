@@ -1,12 +1,11 @@
 import urllib.request
-from datetime import datetime
 from pandas import DataFrame
 import pandas as pd
 
 
-def validate_download(url):
+def validate_download(url: urllib.request, year: int, month: int, day: int) -> urllib.request:
     try:
-        url = urllib.request.urlretrieve(url, 'data/wig20_d.csv')
+        url = urllib.request.urlretrieve(url, f'data/wig20_d-{year}-{month}-{day}.csv')
     except FileExistsError:
         raise FileExistsError("This url probably doesn't exist")
     return url

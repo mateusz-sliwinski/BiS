@@ -1,21 +1,22 @@
 import pandas as pd
-import sqlalchemy
-from validate_data import type_validate,check_nan_values
+from utils import create_engine
+from date import day
+from date import month
+from date import year
+from validate_data import type_validate
+from validate_data import check_nan_values
+from validate_data import validate_download
+from const import URL
+from const import URL_DATABASE
 
+validate_download(URL, year, month, day)
 
-def create_engine(name: str) -> sqlalchemy.create_engine:
-    engine = sqlalchemy.create_engine(name)
-    return engine
-
-
-url_database = 'postgresql+psycopg2://postgres:admin@localhost/postgres'
-dbEngine = create_engine(url_database)
+dbEngine = create_engine(URL_DATABASE)
 connection = dbEngine.connect()
 
-df = pd.read_csv('data/wig20_d.csv')
+df = pd.read_csv(f'data/wig20_d-{year}-{month}-{day}.csv')
 df = type_validate(df)
 df = check_nan_values(df)
-if not connection.dialect.has_table(connection, 'wig'):
-    df.to_sql('wig', dbEngine)
 
-print(df)
+if not connection.dialect.has_table(connection, f'data/wig20_d-{year}-{month}-{day}.csv'):
+    df.to_sql(f'data/wig20_d-{year}-{month}-{day}.csv', connection)
