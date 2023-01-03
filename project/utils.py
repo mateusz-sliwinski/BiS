@@ -1,4 +1,8 @@
+import pickle
+
+import pandas as pd
 import sqlalchemy
+from matplotlib import pyplot as plt
 from pandas import DataFrame
 
 
@@ -27,3 +31,31 @@ def select_data(df: DataFrame, connection: sqlalchemy.create_engine, year: int, 
 
     else:
         print(df[(df['Data'] > f'{year}-{month}-{day}') & (df['Data'] < f'{second_year}-{second_month}-{second_day}')])
+
+
+def df_plot_history(x, y, title="", xlabel='Date', ylabel='Value', dpi=100):
+    plt.figure(figsize=(16, 5), dpi=dpi)
+    plt.plot(x, y, color='tab:red')
+    plt.gca().set(title=title, xlabel=xlabel, ylabel=ylabel)
+    plt.show()
+
+
+def convert_data_set(df: DataFrame) -> DataFrame:
+    df['Data'] = pd.to_datetime(df['Data'])
+    df = df.tail(3)
+
+    year = df['Data'].dt.year
+    month = df['Data'].dt.month
+    day = df['Data'].dt.day
+    df['year'] = year.astype(int)
+    df['month'] = month.astype(int)
+    df['day'] = day.astype(int)
+    dane = df[['year', 'month', 'day', 'Otwarcie', 'Najwyzszy', 'Najnizszy', 'Wolumen', 'Zamkniecie']]
+    return dane
+
+
+def predict_tomorrow(dane: DataFrame) -> None:
+    loaded_model = pickle.load(open('Reg', 'rb'))
+    result = loaded_model.predict(dane)
+    last_element = result[-1]
+    print(f'{last_element}')
