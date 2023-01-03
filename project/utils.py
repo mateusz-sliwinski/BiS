@@ -1,8 +1,10 @@
 import pickle
+from typing import Any
+
 import pandas as pd
 import sqlalchemy
 from matplotlib import pyplot as plt
-from pandas import DataFrame
+from pandas import DataFrame, Series
 from boar.running import run_notebook
 
 
@@ -13,24 +15,31 @@ def create_engine(name: str) -> sqlalchemy.create_engine:
 
 def select_data(df: DataFrame, connection: sqlalchemy.create_engine, year: int, month: int, day: int, second_year: int,
                 second_month: int, second_day: int,
-                save_to_db: bool) -> None:
+                save_to_db: bool) -> DataFrame:
     if save_to_db:
         if not connection.dialect.has_table(
                 connection,
-                f'data/wig20_od-{year}-{month}-{day}-do{second_year}-{second_month}-{second_day}.csv'):
+                f'data/wig20-od-{year}-{month}-{day}-do-{second_year}-{second_month}-{second_day}.csv'):
+
             selected = df[
                 (df['Data'] > f'{year}-{month}-{day}') & (df['Data'] < f'{second_year}-{second_month}-{second_day}')
                 ]
 
             selected.to_sql(
-                f'data/wig20-od-{year}-{month}-{day}-do{second_year}-{second_month}-{second_day}.csv',
+                f'data/wig20-od-{year}-{month}-{day}-do-{second_year}-{second_month}-{second_day}.csv',
                 connection
             )
+            return selected
         else:
-            print('istnieje tabela o takiej nazwie')
+            print('istnieje tabela o takim datasecie\n')
+            df = df[
+                (df['Data'] > f'{year}-{month}-{day}') & (df['Data'] < f'{second_year}-{second_month}-{second_day}')
+                ]
+            return df
 
     else:
-        print(df[(df['Data'] > f'{year}-{month}-{day}') & (df['Data'] < f'{second_year}-{second_month}-{second_day}')])
+        df = df[(df['Data'] > f'{year}-{month}-{day}') & (df['Data'] < f'{second_year}-{second_month}-{second_day}')]
+    return df
 
 
 def df_plot_history(x, y, title="", xlabel='Date', ylabel='Value', dpi=100):
