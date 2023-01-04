@@ -1,6 +1,4 @@
 import pickle
-from typing import Any
-
 import pandas as pd
 import sqlalchemy
 from matplotlib import pyplot as plt
@@ -94,4 +92,4 @@ def connect_db():
     meta_data = MetaData(bind=connection)
     MetaData.reflect(meta_data)
 
-    return meta_data, session
+    return meta_data, session,connection
