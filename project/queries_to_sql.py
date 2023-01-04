@@ -1,36 +1,10 @@
 import datetime
 from sqlalchemy import select
-from sqlalchemy import Table
-from sqlalchemy import Column
-from sqlalchemy import Integer
-from sqlalchemy import String
-from sqlalchemy import Float
-
-from project.utils import connect_db
+from utils import connect_db
+from utils import create_tables
 
 meta_data, session, connection = connect_db()
-
-if not meta_data.tables['archive_table'] == meta_data.tables['archive_table']:
-    archive_table = Table(
-        'archive_table', meta_data,
-        Column('index', Integer),
-        Column('Data', String),
-        Column('Otwarcie', Float),
-        Column('Najwyzszy', Float),
-        Column('Najnizszy', Float),
-        Column('Zamkniecie', Float),
-        Column('Wolumen', Float),
-    )
-    meta_data.create_all()
-
-if not meta_data.tables['log'] == meta_data.tables['log']:
-    log = Table(
-        'log', meta_data,
-        Column('id', Integer, primary_key=True),
-        Column('timestamp', String),
-        Column('message', String),
-    )
-    meta_data.create_all()
+create_tables(connection, meta_data)
 
 
 def test_select():
@@ -42,7 +16,9 @@ def test_select():
 
 # test_select()
 
-def insert_data_to_db(Data: str, otwarcie, najwyzszy, najnizszy, zamkniecie, wolumen):
+def insert_data_to_db(
+        Data: str, otwarcie: float, najwyzszy: float, najnizszy: float, zamkniecie: float,
+        wolumen: float) -> None:
     wig = meta_data.tables['wig']
     log_table = meta_data.tables['log']
     record = session.query(wig).count()
@@ -70,7 +46,7 @@ def insert_data_to_db(Data: str, otwarcie, najwyzszy, najnizszy, zamkniecie, wol
 # insert_data_to_db('2022-12-31', 1797.53, 1797.86, 1786.56, 1792.7, 6736363)
 
 
-def update_data_to_db(index, wolumen):
+def update_data_to_db(index: int, wolumen: float) -> None:
     wig = meta_data.tables['wig']
     log_table = meta_data.tables['log']
     update_data = wig.update().where(wig.c.index == index).values(Wolumen=wolumen)
@@ -87,7 +63,7 @@ def update_data_to_db(index, wolumen):
 # update_data_to_db(15, 15000)
 
 
-def delete_data_to_db(index):
+def delete_data_to_db(index: int) -> None:
     wig = meta_data.tables['wig']
     archive = meta_data.tables['archive_table']
     log_table = meta_data.tables['log']
@@ -122,4 +98,5 @@ def delete_data_to_db(index):
     session.execute(delete_data)
     session.commit()
 
-# delete_data_to_db(7483)
+
+# delete_data_to_db(6000)

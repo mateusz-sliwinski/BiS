@@ -2,12 +2,16 @@ import pickle
 import pandas as pd
 import sqlalchemy
 from matplotlib import pyplot as plt
-from pandas import DataFrame, Series
+from pandas import DataFrame
 from boar.running import run_notebook
 from sqlalchemy import MetaData
 from sqlalchemy.orm import Session
-
 from project.const import URL_DATABASE
+from sqlalchemy import Table
+from sqlalchemy import Column
+from sqlalchemy import Integer
+from sqlalchemy import String
+from sqlalchemy import Float
 
 
 def create_engine(name: str) -> sqlalchemy.create_engine:
@@ -15,9 +19,11 @@ def create_engine(name: str) -> sqlalchemy.create_engine:
     return engine
 
 
-def select_data(df: DataFrame, connection: sqlalchemy.create_engine, year: int, month: int, day: int, second_year: int,
-                second_month: int, second_day: int,
-                save_to_db: bool) -> DataFrame:
+def select_data(
+        df: DataFrame, connection: sqlalchemy.create_engine, year: int, month: int, day: int, second_year: int,
+        second_month: int, second_day: int,
+        save_to_db: bool) -> DataFrame:
+
     if save_to_db:
         if not connection.dialect.has_table(
                 connection,
@@ -92,4 +98,28 @@ def connect_db():
     meta_data = MetaData(bind=connection)
     MetaData.reflect(meta_data)
 
-    return meta_data, session,connection
+    return meta_data, session, connection
+
+
+def create_tables(connection, meta_data):
+    if not connection.dialect.has_table(connection, 'archive_table'):
+        Table(
+            'archive_table', meta_data,
+            Column('index', Integer),
+            Column('Data', String),
+            Column('Otwarcie', Float),
+            Column('Najwyzszy', Float),
+            Column('Najnizszy', Float),
+            Column('Zamkniecie', Float),
+            Column('Wolumen', Float),
+        )
+        meta_data.create_all()
+
+    if not connection.dialect.has_table(connection, 'log'):
+        Table(
+            'log', meta_data,
+            Column('id', Integer, primary_key=True),
+            Column('timestamp', String),
+            Column('message', String),
+        )
+        meta_data.create_all()
