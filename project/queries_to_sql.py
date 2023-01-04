@@ -1,10 +1,18 @@
 import datetime
 from sqlalchemy import select
+from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import SQLAlchemyError
+
 from utils import connect_db
 from utils import create_tables
 
 meta_data, session, connection = connect_db()
 create_tables(connection, meta_data)
+
+
+class TypeException(SQLAlchemyError):
+    def __init__(self, message):
+        self.message = message
 
 
 def test_select():
@@ -49,18 +57,28 @@ def insert_data_to_db(
 def update_data_to_db(index: int, wolumen: float) -> None:
     wig = meta_data.tables['wig']
     log_table = meta_data.tables['log']
-    update_data = wig.update().where(wig.c.index == index).values(Wolumen=wolumen)
 
-    new_log = log_table.insert().values(
-        timestamp=datetime.datetime.now(),
-        message=f'update row in wig table {index} {wolumen}'
-    )
-    session.execute(new_log)
-    session.execute(update_data)
-    session.commit()
+    if index > session.query(wig).count():
+        new_log = log_table.insert().values(
+            timestamp=datetime.datetime.now(),
+            message=f'Error with update {index} {wolumen}'
+        )
+        session.execute(new_log)
+        session.commit()
+        raise NoResultFound
+
+    else:
+        update_data = wig.update().where(wig.c.index == index).values(Wolumen=wolumen)
+        new_log = log_table.insert().values(
+            timestamp=datetime.datetime.now(),
+            message=f'update row in wig table {index} {wolumen}'
+        )
+        session.execute(new_log)
+        session.execute(update_data)
+        session.commit()
 
 
-# update_data_to_db(15, 15000)
+# update_data_to_db(1123123312, 15000)
 
 
 def delete_data_to_db(index: int) -> None:
@@ -68,35 +86,43 @@ def delete_data_to_db(index: int) -> None:
     archive = meta_data.tables['archive_table']
     log_table = meta_data.tables['log']
 
-    record = select(
-        wig.c.index, wig.c.Data, wig.c.Otwarcie, wig.c.Najwyzszy, wig.c.Najnizszy, wig.c.Zamkniecie,
-        wig.c.Wolumen
-    ).where(
-        wig.c.index == index
-    )
+    if index > session.query(wig).count():
+        new_log = log_table.insert().values(
+            timestamp=datetime.datetime.now(),
+            message=f'Error with select and delete {index}'
+        )
+        session.execute(new_log)
+        session.commit()
+        raise NoResultFound
+    else:
+        record = select(
+            wig.c.index, wig.c.Data, wig.c.Otwarcie, wig.c.Najwyzszy, wig.c.Najnizszy, wig.c.Zamkniecie,
+            wig.c.Wolumen
+        ).where(
+            wig.c.index == index
+        )
 
-    archive_to_table = archive.insert().from_select(
-        [
-            'index',
-            'Data',
-            'Otwarcie',
-            'Najwyzszy',
-            'Najnizszy',
-            'Zamkniecie',
-            'Wolumen',
-        ],
-        record
-    )
+        archive_to_table = archive.insert().from_select(
+            [
+                'index',
+                'Data',
+                'Otwarcie',
+                'Najwyzszy',
+                'Najnizszy',
+                'Zamkniecie',
+                'Wolumen',
+            ],
+            record
+        )
 
-    new_log = log_table.insert().values(timestamp=datetime.datetime.now(), message=f'add row to archive {index}')
-    session.execute(new_log)
-    session.execute(archive_to_table)
+        new_log = log_table.insert().values(timestamp=datetime.datetime.now(), message=f'add row to archive {index}')
+        session.execute(new_log)
+        session.execute(archive_to_table)
 
-    new_log = log_table.insert().values(timestamp=datetime.datetime.now(), message=f'delete row about {index}')
-    session.execute(new_log)
-    delete_data = wig.delete().where(wig.c.index == index)
-    session.execute(delete_data)
-    session.commit()
+        new_log = log_table.insert().values(timestamp=datetime.datetime.now(), message=f'delete row about {index}')
+        session.execute(new_log)
+        delete_data = wig.delete().where(wig.c.index == index)
+        session.execute(delete_data)
+        session.commit()
 
-
-# delete_data_to_db(6000)
+# delete_data_to_db(3000)

@@ -14,4 +14,4 @@ print(dbEngine.table_names())
 
 df = pd.read_sql_table(input(), connection)
 
-run_predict(True, df)
+run_predict(False, df)
