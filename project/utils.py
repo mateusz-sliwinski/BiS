@@ -6,6 +6,10 @@ import sqlalchemy
 from matplotlib import pyplot as plt
 from pandas import DataFrame, Series
 from boar.running import run_notebook
+from sqlalchemy import MetaData
+from sqlalchemy.orm import Session
+
+from project.const import URL_DATABASE
 
 
 def create_engine(name: str) -> sqlalchemy.create_engine:
@@ -81,3 +85,13 @@ def add_split_date(df: DataFrame) -> DataFrame:
     df['month'] = month.astype(int)
     df['day'] = day.astype(int)
     return df
+
+
+def connect_db():
+    dbEngine = create_engine(URL_DATABASE)
+    connection = dbEngine.connect()
+    session = Session(dbEngine)
+    meta_data = MetaData(bind=connection)
+    MetaData.reflect(meta_data)
+
+    return meta_data, session
