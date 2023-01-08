@@ -39,9 +39,9 @@ def type_validate(df: DataFrame) -> DataFrame:
 
     try:
         df['Wolumen'] == df['Wolumen'].astype(float)
-
     except ValueError:
         raise ValueError('Incorrect Wolumen format, should be float')
+
     return df
 
 
