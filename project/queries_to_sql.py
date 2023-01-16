@@ -1,8 +1,8 @@
 import datetime
+import re
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.exc import SQLAlchemyError
-import re
 from utils import connect_db
 from utils import create_tables
 
@@ -56,10 +56,17 @@ def insert_data_to_db(
         session.commit()
 
     else:
-        return print("Invalid date, try again: ")
+        new_log = log_table.insert().values(
+            timestamp=datetime.datetime.now(),
+            message=f'Invalid date'
+        )
+        session.execute(new_log)
+        session.commit()
+
+        return print("Invalid date, try again")
 
 
-insert_data_to_db('2022-12-31', 1797.53, 1797.86, 1786.56, 1792.7, 6736363)
+# insert_data_to_db('2022-12-31', 1797.53, 1797.86, 1786.56, 1792.7, 6736363)
 
 
 def update_data_to_db(index: int, wolumen: float) -> None:
@@ -133,4 +140,13 @@ def delete_data_to_db(index: int) -> None:
         session.execute(delete_data)
         session.commit()
 
+
 # delete_data_to_db(3000)
+
+
+# from sqlalchemy import select, func
+#
+# wig = meta_data.tables['wig']
+# query = select([func.sum((wig.c.Wolumen).where(wig.c.Data.beetween(2022 - 12 - 31, 2023 - 1 - 6)))])
+# result = connection.execute(query)
+# print(result.scalar())
