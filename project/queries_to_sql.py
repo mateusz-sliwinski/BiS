@@ -2,7 +2,7 @@ import datetime
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.exc import SQLAlchemyError
-
+import re
 from utils import connect_db
 from utils import create_tables
 
@@ -31,27 +31,35 @@ def insert_data_to_db(
     log_table = meta_data.tables['log']
     record = session.query(wig).count()
 
-    add_data = wig.insert().values(
-        index=record,
-        Data=Data,
-        Otwarcie=otwarcie,
-        Najwyzszy=najwyzszy,
-        Najnizszy=najnizszy,
-        Zamkniecie=zamkniecie,
-        Wolumen=wolumen
-    )
+    regex = re.compile("[0-9]{4}\-[0-9]{2}\-[0-9]{2}")
 
-    new_log = log_table.insert().values(
-        timestamp=datetime.datetime.now(),
-        message=f'add row to wig table {record} {Data} {otwarcie} {najwyzszy} {najnizszy} {zamkniecie} {wolumen}'
-    )
+    match = re.match(regex, Data)
 
-    session.execute(new_log)
-    session.execute(add_data)
-    session.commit()
+    if match:
+        add_data = wig.insert().values(
+            index=record,
+            Data=Data,
+            Otwarcie=otwarcie,
+            Najwyzszy=najwyzszy,
+            Najnizszy=najnizszy,
+            Zamkniecie=zamkniecie,
+            Wolumen=wolumen
+        )
+
+        new_log = log_table.insert().values(
+            timestamp=datetime.datetime.now(),
+            message=f'add row to wig table {record} {Data} {otwarcie} {najwyzszy} {najnizszy} {zamkniecie} {wolumen}'
+        )
+
+        session.execute(new_log)
+        session.execute(add_data)
+        session.commit()
+
+    else:
+        return print("Invalid date, try again: ")
 
 
-# insert_data_to_db('2022-12-31', 1797.53, 1797.86, 1786.56, 1792.7, 6736363)
+insert_data_to_db('2022-12-31', 1797.53, 1797.86, 1786.56, 1792.7, 6736363)
 
 
 def update_data_to_db(index: int, wolumen: float) -> None:
