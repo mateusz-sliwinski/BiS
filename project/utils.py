@@ -6,7 +6,7 @@ from pandas import DataFrame
 from boar.running import run_notebook
 from sqlalchemy import MetaData
 from sqlalchemy.orm import Session
-from project.const import URL_DATABASE
+from const import URL_DATABASE
 from sqlalchemy import Table
 from sqlalchemy import Column
 from sqlalchemy import Integer
@@ -23,7 +23,6 @@ def select_data(
         df: DataFrame, connection: sqlalchemy.create_engine, year: int, month: int, day: int, second_year: int,
         second_month: int, second_day: int,
         save_to_db: bool) -> DataFrame:
-
     if save_to_db:
         if not connection.dialect.has_table(
                 connection,
@@ -72,12 +71,27 @@ def predict_tomorrow(dane: DataFrame) -> None:
     print(f'{last_element}')
 
 
+def predict_tomorrow_lasso(dane: DataFrame) -> None:
+    loaded_model = pickle.load(open('lasso', 'rb'))
+    result = loaded_model.predict(dane.values)
+    last_element = result[-1]
+    print(f'{last_element}')
+
+
 def run_predict(notebook_run: bool, df: DataFrame) -> None:
     if notebook_run:
         run_notebook('regression.ipynb')
 
     df_last_three_record = convert_data_set(df)
     predict_tomorrow(df_last_three_record)
+
+
+def run_predict_lasso(notebook_run: bool, df: DataFrame) -> None:
+    if notebook_run:
+        run_notebook('lasso.ipynb')
+
+    df_last_three_record = convert_data_set(df)
+    predict_tomorrow_lasso(df_last_three_record)
 
 
 def add_split_date(df: DataFrame) -> DataFrame:
