@@ -111,14 +111,14 @@ def delete_data_to_db(index: int) -> None:
     archive = meta_data.tables['archive_table']
     log_table = meta_data.tables['log']
 
-    if index > session.query(wig).count():
+    if session.query(wig.c.index).filter(wig.c.index == index).first() is None:
         new_log = log_table.insert().values(
             timestamp=datetime.datetime.now(),
             message=f'Error with select and delete {index}'
         )
         session.execute(new_log)
         session.commit()
-        raise NoResultFound
+        raise NoResultFound('Error with select and delete')
     else:
         record = select(
             wig.c.index, wig.c.Data, wig.c.Otwarcie, wig.c.Najwyzszy, wig.c.Najnizszy, wig.c.Zamkniecie,
@@ -151,7 +151,7 @@ def delete_data_to_db(index: int) -> None:
         session.commit()
 
 
-# delete_data_to_db(3000)
+# delete_data_to_db(1)
 
 
 def show_quarter():
@@ -198,7 +198,7 @@ def show_month():
     df_month.plot()
     plt.show()
 
-
-show_year()
-show_quarter()
-show_month()
+#
+# show_year()
+# show_quarter()
+# show_month()
