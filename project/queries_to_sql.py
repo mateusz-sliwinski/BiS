@@ -1,13 +1,23 @@
 import datetime
+import json
 import re
+
+import pandas as pd
+import sqlalchemy
+from matplotlib import pyplot as plt
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.exc import SQLAlchemyError
-from utils import connect_db
+
+from project.const import URL_DATABASE
+from utils import connect_db, create_engine
 from utils import create_tables
 
 meta_data, session, connection = connect_db()
 create_tables(connection, meta_data)
+
+dbEngine = create_engine(URL_DATABASE)
+connection = dbEngine.connect()
 
 
 class TypeException(SQLAlchemyError):
@@ -144,9 +154,51 @@ def delete_data_to_db(index: int) -> None:
 # delete_data_to_db(3000)
 
 
-# from sqlalchemy import select, func
-#
-# wig = meta_data.tables['wig']
-# query = select([func.sum((wig.c.Wolumen).where(wig.c.Data.beetween(2022 - 12 - 31, 2023 - 1 - 6)))])
-# result = connection.execute(query)
-# print(result.scalar())
+def show_quarter():
+    df = pd.read_sql_table('wig', connection)
+    del df['index']
+    df['Data'] = pd.to_datetime(df['Data'])
+    df['quarter'] = df['Data'].dt.to_period('Q')
+
+    df_quarter_add = df.groupby(['quarter']).agg({'Wolumen': 'sum'}).reset_index()
+    df_quarter_add['quarter'] = df_quarter_add['quarter'].astype(str)
+
+    df_quarter_add.to_sql(f'quarter', connection, if_exists='replace', index=False)
+
+    df_quarter = df.groupby(['quarter']).agg({'Wolumen': 'sum'})
+    df_quarter.plot()
+    plt.show()
+
+
+def show_year():
+    df = pd.read_sql_table('wig', connection)
+    del df['index']
+    df['Data'] = pd.to_datetime(df['Data'])
+    year = df['Data'].dt.year
+    df['year'] = year.astype(int)
+
+    df_year = df.groupby(['year']).agg({'Wolumen': 'sum'})
+    df_year_add = df.groupby(['year']).agg({'Wolumen': 'sum'}).reset_index()
+    df_year_add.to_sql(f'year', connection, if_exists='replace', index=False)
+
+    df_year.plot()
+    plt.show()
+
+
+def show_month():
+    df = pd.read_sql_table('wig', connection)
+    del df['index']
+    df['Data'] = pd.to_datetime(df['Data'])
+    month = df['Data'].dt.month
+    df['month'] = month.astype(int)
+    df_month = df.groupby(['month']).agg({'Wolumen': 'sum'})
+    df_month_add = df.groupby(['month']).agg({'Wolumen': 'sum'}).reset_index()
+    df_month_add.to_sql(f'month', connection, if_exists='replace', index=False)
+
+    df_month.plot()
+    plt.show()
+
+
+show_year()
+show_quarter()
+show_month()
